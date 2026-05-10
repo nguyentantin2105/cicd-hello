@@ -1,0 +1,25 @@
+body {
+  font-family: system-ui, sans-serif;
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  margin: 0;
+  background: #0d1117;
+  color: #e6edf3;
+}
+
+main {
+  text-align: center;
+  padding: 2rem;
+}
+
+h1 {
+  color: #58a6ff;
+}
+
+#build {
+  font-family: monospace;
+  background: #161b22;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
