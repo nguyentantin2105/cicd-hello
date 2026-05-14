@@ -54,6 +54,62 @@ In your repo on GitHub:
 3. Push to `main` again (or re-run the workflow). The `deploy` job will publish your site at:
    `https://<your-username>.github.io/cicd-hello/`
 
+## Deploy to local Kubernetes (kind)
+
+The CI workflow also publishes a container image to **GHCR** on every push to `main`:
+`ghcr.io/nguyentantin2105/cicd-hello:latest` (plus `:<short-sha>` and `:main` tags).
+
+### One-time setup
+
+```bash
+# 1. Install tools (macOS)
+brew install kind kubectl helm
+
+# 2. Create a kind cluster with port 80/443 mapped to host
+kind create cluster --name cicd-hello --config k8s/kind-config.yaml
+
+# 3. Install ingress-nginx (the kind-flavored manifest)
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=120s
+
+# 4. Map the ingress host locally
+echo "127.0.0.1 cicd-hello.local" | sudo tee -a /etc/hosts
+```
+
+### Make GHCR image public (one time)
+
+After the first push, go to https://github.com/users/nguyentantin2105/packages/container/cicd-hello/settings
+and set **Visibility = Public** so kind can pull without auth.
+
+### Deploy via Helm
+
+```bash
+helm upgrade --install hello ./helm/cicd-hello
+
+# Watch pods come up
+kubectl get pods -w
+
+# Open the site
+open http://cicd-hello.local
+```
+
+### Update to a specific image tag
+
+```bash
+helm upgrade hello ./helm/cicd-hello \
+  --set image.tag=sha-<short-sha>
+```
+
+### Tear down
+
+```bash
+helm uninstall hello
+kind delete cluster --name cicd-hello
+```
+
 ## Things to try (learning exercises)
 
 - Break the test in `tests/script.test.js` and open a PR — watch CI fail.
